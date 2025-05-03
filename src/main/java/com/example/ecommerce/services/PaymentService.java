@@ -1,0 +1,66 @@
+package com.example.ecommerce.services;
+
+import com.example.ecommerce.enums.PaymentStatus;
+import com.example.ecommerce.models.Order;
+import com.example.ecommerce.models.Payment;
+import com.example.ecommerce.repositories.OrderRepository;
+import com.example.ecommerce.repositories.PaymentRepository;
+import com.stripe.exception.StripeException;
+import com.stripe.model.PaymentIntent;
+import com.stripe.param.PaymentIntentCreateParams;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import jakarta.transaction.Transactional;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class PaymentService {
+    private final PaymentRepository paymentRepo;
+    private final OrderRepository orderRepo;
+
+    /** Create Stripe intent & persist a PENDING Payment */
+    @Transactional
+    public String createPayment(Long orderId, Long amount, String currency) throws StripeException {
+        // 1. create Stripe intent
+        PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
+                .setAmount(amount)
+                .setCurrency(currency)
+                .setAutomaticPaymentMethods(
+                        PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
+                                .setEnabled(true).build())
+                .build();
+
+        PaymentIntent pi = PaymentIntent.create(params);
+
+        // 2. persist our Payment entity
+        Order order = orderRepo.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        Payment payment = new Payment();
+        payment.setOrder(order);
+        payment.setUserId(order.getUser().getId());
+        payment.setAmount(amount);
+        payment.setCurrency(currency);
+        payment.setStatus(PaymentStatus.PENDING);
+        payment.setCreatedAt(LocalDateTime.now());
+        paymentRepo.save(payment);
+
+        return pi.getClientSecret();
+    }
+
+    /** Admin: fetch all payments */
+    public List<Payment> getAllPayments() {
+        return paymentRepo.findAll();
+    }
+
+    /** Mark payment status after a webhook (if you wire one up) */
+    @Transactional
+    public void updateStatus(Long paymentId, PaymentStatus status) {
+        Payment p = paymentRepo.findById(paymentId)
+                .orElseThrow(() -> new RuntimeException("Payment not found"));
+        p.setStatus(status);
+        paymentRepo.save(p);
+    }
+}
