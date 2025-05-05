@@ -1,11 +1,11 @@
 package com.example.ecommerce.controllers;
 
-import com.example.ecommerce.models.Product;
+import com.example.ecommerce.dtos.CreateOrderRequest;
+import com.example.ecommerce.dtos.OrderRequestItem;
+import com.example.ecommerce.models.*;
+import com.example.ecommerce.services.AddressService;
 import com.example.ecommerce.services.OrderService;
 import com.example.ecommerce.services.UserService;
-import com.example.ecommerce.models.Order;
-import com.example.ecommerce.models.OrderItem;
-import com.example.ecommerce.models.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,27 +21,30 @@ import java.util.Map;
 public class OrderController {
     @Autowired private OrderService orderService;
     @Autowired private UserService userService;
-    //DTO classes for request/response can be used for clarity
-    static class OrderRequestItem { public Long productId; public Integer quantity; }
-    static class CreateOrderRequest { public List<OrderRequestItem> items; }
+    @Autowired private AddressService addressService;
 
     @PostMapping
     public Order placeOrder(@AuthenticationPrincipal org.springframework.security.core.userdetails.User userDetails,
                             @RequestBody CreateOrderRequest request) {
-        // Find the actual User entity by email (username)
-        User user = userService.getUserById(
-                userService.getAllUsers().stream()
-                        .filter(u -> u.getEmail().equals(userDetails.getUsername()))
-                        .findFirst().orElseThrow().getId()
-        );
-        // Convert request items to OrderItem entities
-        List<OrderItem> orderItems = request.items.stream().map(itemReq -> {
-            OrderItem oi = new OrderItem();
-            oi.setProduct(new com.example.ecommerce.models.Product(itemReq.productId, null, null, null, null, null, null,null));
-            oi.setQuantity(itemReq.quantity);
-            return oi;
-        }).toList();
-        return orderService.placeOrder(user, orderItems);
+
+        User user = userService.getUserByEmail(userDetails.getUsername());
+
+        Address shipping = addressService     // inject it first
+                .getByIdForUser(user, request.addressId);
+
+        List<OrderItem> orderItems = request.items.stream()
+                .map(itemReq -> {
+                    OrderItem oi = new OrderItem();
+                    // only the ID is needed here; OrderService will fetch the full Product
+                    oi.setProduct(new Product(itemReq.productId, null, null,
+                            null, null, null, null, null));
+                    oi.setQuantity(itemReq.quantity);
+                    return oi;
+                })
+                .toList();
+
+
+        return orderService.placeOrder(user, shipping, orderItems);
     }
 
     @GetMapping

@@ -37,6 +37,11 @@ public class Order {
     @JsonManagedReference
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
     private Payment payment;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "address_id")
+    private Address shippingAddress;
+
     public void addItem(OrderItem item) {
         items.add(item);
         item.setOrder(this);
@@ -46,4 +51,7 @@ public class Order {
         item.setOrder(null);
     }
 
+    public User getUser() {
+        return user;
+    }
 }

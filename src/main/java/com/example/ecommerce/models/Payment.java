@@ -2,6 +2,7 @@ package com.example.ecommerce.models;
 
 import com.example.ecommerce.enums.PaymentStatus;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,8 +23,16 @@ public class Payment {
     @Column(name = "payment_intent_id", unique = true)
     private String paymentIntentId;
 
-
-    private Long userId;
+    @JsonBackReference                 // break the navigation loop
+    @JsonIgnoreProperties({
+            "orders", "products",      // optional: prune heavy collections
+            "reviews",
+            "hibernateLazyInitializer","handler"
+    })
+    @ManyToOne (fetch = FetchType.LAZY)
+    @JoinColumn( name = "user_id")
+    private User user;
+    
     private Long amount;
     private String currency;
     private PaymentStatus status;
@@ -32,5 +41,7 @@ public class Payment {
     @JsonBackReference
     @OneToOne @JoinColumn(name = "order_id")
     private Order order;
+
+
 }
 

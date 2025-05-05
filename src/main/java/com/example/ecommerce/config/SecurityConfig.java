@@ -43,12 +43,15 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST,   "/api/products/*/reviews/**").hasRole("CUSTOMER")
                         .requestMatchers("/api/seller-applications/**").hasRole("CUSTOMER")
 
+
+
                         /* admin areas */
                         .requestMatchers("/api/admin/seller-applications/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/products/*/reviews/**").hasRole("ADMIN")
                         .requestMatchers("/api/orders/**").hasAnyRole("CUSTOMER", "SELLER", "ADMIN")
 
+                        .requestMatchers("/api/addresses/**").hasAnyRole("CUSTOMER", "SELLER", "ADMIN")
 
                         .anyRequest().authenticated()
                 );

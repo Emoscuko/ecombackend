@@ -19,7 +19,7 @@ public class OrderService {
     @Autowired private PaymentRepository paymentRepo;
 
     @Transactional
-    public Order placeOrder(User user, List<OrderItem> items) {
+    public Order placeOrder(User user, Address shipping, List<OrderItem> items) {
         double total = 0;
 
         for (OrderItem item : items) {
@@ -42,6 +42,7 @@ public class OrderService {
 
         Order order = new Order();
         order.setUser(user);
+        order.setShippingAddress(shipping);
         order.setTotalAmount(total);
         order.setStatus(OrderStatus.PENDING);
         items.forEach(order::addItem);

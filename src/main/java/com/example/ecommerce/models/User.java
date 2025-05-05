@@ -1,6 +1,7 @@
 package com.example.ecommerce.models;
 
 import com.example.ecommerce.enums.Role;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -26,22 +27,31 @@ public class User {
     private Role role;         // e.g. CUSTOMER, ADMIN or SELLER
 
     private boolean enabled = true;
+
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Review> reviews;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Order> orders;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "seller", cascade = CascadeType.ALL)
     private List<Product> products;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    private Address address;
+    @JsonIgnore
+    @OneToMany(mappedBy="user", cascade=CascadeType.ALL)
+    private List<Address> addresses;
+
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
 
+    public Long getId() {
+        return id;
+    }
 
     // Optionally, relationships like orders or reviews
     // @OneToMany(mappedBy="user", cascade = CascadeType.ALL)

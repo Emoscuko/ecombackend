@@ -1,5 +1,6 @@
 package com.example.ecommerce.controllers;
 
+import com.example.ecommerce.dtos.ReviewRequest;
 import com.example.ecommerce.services.ReviewService;
 import com.example.ecommerce.services.UserService;
 import com.example.ecommerce.models.Review;
@@ -20,7 +21,7 @@ public class ReviewController {
     @Autowired private UserService   userService;
 
     // ---------- DTOs ----------
-    record ReviewRequest(int rating, String comment) {}
+
     record ReviewResponse(Long id, int rating, String comment,
                           String author, LocalDateTime createdAt) {
         static ReviewResponse of(Review r) {
@@ -41,7 +42,7 @@ public class ReviewController {
                 .findFirst().orElseThrow();
 
         return ReviewResponse.of(
-                reviewService.addReview(user, productId, req.rating(), req.comment())
+                reviewService.addReview(user, productId, req.rating, req.comment)
         );
     }
 
