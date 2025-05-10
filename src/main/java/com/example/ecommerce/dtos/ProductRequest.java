@@ -1,11 +1,15 @@
+// src/main/java/com/example/ecommerce/dtos/ProductRequest.java
 package com.example.ecommerce.dtos;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 public record ProductRequest(
-        String name,
-        String description,
-        Double price,
-        Integer stock,
-        String imageUrl,
-        Long sellerId,
-        Long   categoryId
+        @NotBlank String name,
+        @NotBlank String description,
+        @NotNull    Double price,
+        @NotNull    Integer stock,
+        @NotBlank   String imageUrl,
+        @NotNull    Long   sellerId,
+        @NotNull    Long   categoryId
 ) {}

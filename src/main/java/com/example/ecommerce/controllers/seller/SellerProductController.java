@@ -8,6 +8,7 @@ import com.example.ecommerce.repositories.CategoryRepository;
 import com.example.ecommerce.repositories.UserRepository;
 import com.example.ecommerce.services.ProductService;
 import com.example.ecommerce.models.Product;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,12 +28,17 @@ public class SellerProductController {
     @Autowired private UserRepository userRepo;
 
     @PostMapping
-    public Product create(@RequestBody ProductRequest dto, Principal principal) {
-        User seller = currentSeller(principal);
-        Category cat = categoryRepo.findById(dto.categoryId())
-                .orElseThrow(() -> new RuntimeException("Bad category"));
-        return productService.addProduct(toEntity(dto, cat, seller));
-    }
+ public Product create(@Valid @RequestBody ProductRequest dto, Principal principal) {
+             User seller = currentSeller(principal);
+             Category cat = categoryRepo.findById(dto.categoryId())
+                             .orElseThrow(() ->
+                                 new ResponseStatusException(
+                                             HttpStatus.BAD_REQUEST,
+                                             "Invalid category ID: " + dto.categoryId()
+                                                 )
+                                     );
+             return productService.addProduct(toEntity(dto, cat, seller));
+         }
     private User currentSeller(Principal principal) {
         return userRepo.findByEmail(principal.getName()).orElseThrow();
     }
@@ -47,12 +53,16 @@ public class SellerProductController {
         if (!p.getSeller().getId().equals(sellerId)) {     // ownership guard
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your product");
         }
+        if (!p.isActive()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found");
+        }
+
         return p;
     }
 
 
     private Product toEntity(ProductRequest r, Category c, User s) {
-        return new Product(null, r.name(), r.description(), r.price(),
+        return new Product(null,true, r.name(), r.description(), r.price(),
                 r.imageUrl(), r.stock(), s, c);
     }
     @PutMapping("/{id}")

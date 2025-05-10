@@ -38,6 +38,8 @@ public class Order {
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
     private Payment payment;
 
+    @JsonIgnoreProperties({ "user", "hibernateLazyInitializer", "handler" })
+    @JsonIncludeProperties({ "id", "street", "city", "state", "zip" })
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "address_id")
     private Address shippingAddress;

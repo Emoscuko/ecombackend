@@ -6,10 +6,13 @@ import com.example.ecommerce.models.*;
 import com.example.ecommerce.services.AddressService;
 import com.example.ecommerce.services.OrderService;
 import com.example.ecommerce.services.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
 import java.util.List;
@@ -36,7 +39,7 @@ public class OrderController {
                 .map(itemReq -> {
                     OrderItem oi = new OrderItem();
                     // only the ID is needed here; OrderService will fetch the full Product
-                    oi.setProduct(new Product(itemReq.productId, null, null,
+                    oi.setProduct(new Product(itemReq.productId,true , null, null,
                             null, null, null, null, null));
                     oi.setQuantity(itemReq.quantity);
                     return oi;
@@ -45,6 +48,19 @@ public class OrderController {
 
 
         return orderService.placeOrder(user, shipping, orderItems);
+    }
+    @GetMapping("/{id}")
+    public Order getOne(@PathVariable Long id,
+                        @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal) {
+        Order order = orderService.getOrderById(id);
+
+        // Optional: allow only the owner OR an admin
+        if (!order.getUser().getEmail().equals(principal.getUsername()) &&
+                !principal.getAuthorities().stream()
+                        .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your order");
+        }
+        return order;
     }
 
     @GetMapping

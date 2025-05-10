@@ -1,10 +1,12 @@
 package com.example.ecommerce.services;
 
 import com.example.ecommerce.enums.OrderStatus;
+import com.example.ecommerce.enums.RefundStatus;
 import com.example.ecommerce.models.*;
 import com.example.ecommerce.repositories.OrderRepository;
 import com.example.ecommerce.repositories.PaymentRepository;
 import com.example.ecommerce.repositories.ProductRepository;
+import com.example.ecommerce.repositories.RefundRequestRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,7 +19,11 @@ public class OrderService {
     @Autowired private OrderRepository orderRepo;
     @Autowired private ProductRepository productRepo;
     @Autowired private PaymentRepository paymentRepo;
+    @Autowired private RefundRequestRepository refundRequestRepository;
 
+    public boolean hasPendingRefund(Long orderId) {
+        return refundRequestRepository.existsByOrder_IdAndStatus(orderId, RefundStatus.PENDING);
+    }
     @Transactional
     public Order placeOrder(User user, Address shipping, List<OrderItem> items) {
         double total = 0;

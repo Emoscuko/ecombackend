@@ -11,17 +11,11 @@ public class ProductService {
     @Autowired private ProductRepository productRepo;
 
 
-    public List<Product> getAllProducts() {
-        return productRepo.findAll();
-    }
+
     public Product getProductById(Long id) {
         return productRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
     }
-    public List<Product> getProductsByCategory(Long categoryId) {
-        return productRepo.findByCategory_Id(categoryId);
-    }
-    public List<Product> getProductsBySeller(Long sid)  { return productRepo.findBySeller_Id(sid); }
     public Product addProduct(Product product) {
         // Assume product.category is set to an existing category
         return productRepo.save(product);
@@ -36,14 +30,25 @@ public class ProductService {
     }
 
     public void deleteProductForSeller(Long id, Long sellerId) {
-        mustBeOwner(id, sellerId);
-        productRepo.deleteById(id);
+        Product p = mustBeOwner(id, sellerId);
+        p.setActive(false);
+        productRepo.save(p);
     }
+
     private Product mustBeOwner(Long prodId, Long sellerId) {
         Product p = getProductById(prodId);
         if (!p.getSeller().getId().equals(sellerId))
             throw new SecurityException("Not your product");
         return p;
+    }
+    public List<Product> getAllAdminProducts() {
+                return productRepo.findAll();
+            }
+    /** Admin-only: reactivate */
+    public Product activateProduct(Long id) {
+        Product p = getProductById(id);
+        p.setActive(true);
+        return productRepo.save(p);
     }
     private void copy(Product p, Product d) {          // tiny mapper
         p.setName(d.getName());  p.setDescription(d.getDescription());
@@ -62,6 +67,20 @@ public class ProductService {
         return productRepo.save(product);
     }
     public void deleteProduct(Long id) {
-        productRepo.deleteById(id);
+        Product p = getProductById(id);
+        p.setActive(false);
+        productRepo.save(p);
     }
+    public List<Product> getAllProducts() {
+        return productRepo.findAllByActiveTrue();
+    }
+    public List<Product> getProductsByCategory(Long categoryId) {
+        return productRepo.findByCategory_IdAndActiveTrue(categoryId);
+    }
+    public List<Product> getProductsBySeller(Long sid) {
+        return productRepo.findBySeller_IdAndActiveTrue(sid);
+    }
+
 }
+
+

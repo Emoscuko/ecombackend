@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -42,7 +43,7 @@ public class SecurityConfig {
                         /* customer can file an application */
                         .requestMatchers(HttpMethod.POST,   "/api/products/*/reviews/**").hasRole("CUSTOMER")
                         .requestMatchers("/api/seller-applications/**").hasRole("CUSTOMER")
-
+                        .requestMatchers(HttpMethod.POST,"/api/orders/*/refund-requests").permitAll()
 
 
                         /* admin areas */
@@ -50,6 +51,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/products/*/reviews/**").hasRole("ADMIN")
                         .requestMatchers("/api/orders/**").hasAnyRole("CUSTOMER", "SELLER", "ADMIN")
+                        .requestMatchers("/api/admin/refund-requests/**").hasRole("ADMIN")
 
                         .requestMatchers("/api/addresses/**").hasAnyRole("CUSTOMER", "SELLER", "ADMIN")
 
@@ -57,7 +59,7 @@ public class SecurityConfig {
                 );
 
         // Add JWT filter before the UsernamePasswordAuthenticationFilter
-        http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(jwtAuthFilter, AnonymousAuthenticationFilter.class);
         return http.build();
     }
 
